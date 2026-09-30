@@ -56,7 +56,7 @@ func (c *Compiler) buildConclusionSetupSteps(data *WorkflowData) []string {
 	}
 	ledgerEntry := data.RepoMemoryConfig.ledgerEntry()
 	hasLedgerCompaction := ledgerEntry != nil && ledgerEntry.Ledger != nil && ledgerEntry.Ledger.Compaction != nil
-	steps = append(steps, buildUsageArtifactUploadSteps(artifactPrefixExprForDownstreamJob(data), data.Evals != nil && data.Evals.HasEvals(), usageExperimentArtifactName(data), c.getActionPin, hasLedgerCompaction)...)
+	steps = append(steps, buildUsageArtifactUploadSteps(artifactPrefixExprForDownstreamJob(data), data.Evals != nil && data.Evals.HasEvals(), usageExperimentArtifactName(data), IsDetectionJobEnabled(data.SafeOutputs), hasLedgerCompaction, c.getActionPin)...)
 	return steps
 }
 
