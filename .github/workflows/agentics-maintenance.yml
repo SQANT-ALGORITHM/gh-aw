@@ -1005,10 +1005,91 @@ jobs:
                 "min_segments": 32,
                 "max_segments": 128
               },
+              "key": "run_id",
               "max_patch_kb": 10,
               "max_record_kb": 16,
               "max_segment_kb": 100,
-              "name": "audit-history"
+              "name": "audit-history",
+              "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "aggregate_metrics": {
+                    "type": "object"
+                  },
+                  "anomaly_ids": {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  },
+                  "audit_window": {
+                    "additionalProperties": false,
+                    "properties": {
+                      "end": {
+                        "type": "string"
+                      },
+                      "start": {
+                        "type": "string"
+                      }
+                    },
+                    "type": "object"
+                  },
+                  "audited_at": {
+                    "type": "string"
+                  },
+                  "finding_ids": {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  },
+                  "outcome": {
+                    "enum": [
+                      "findings_reported",
+                      "noop"
+                    ]
+                  },
+                  "recommendation_ids": {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  },
+                  "record_type": {
+                    "enum": [
+                      "workflow_run_audit"
+                    ]
+                  },
+                  "recurring_finding_ids": {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  },
+                  "run_id": {
+                    "type": "string"
+                  },
+                  "runs_reviewed": {
+                    "minimum": 0,
+                    "type": "integer"
+                  }
+                },
+                "required": [
+                  "record_type",
+                  "run_id",
+                  "audited_at",
+                  "audit_window",
+                  "runs_reviewed",
+                  "aggregate_metrics",
+                  "finding_ids",
+                  "recommendation_ids",
+                  "anomaly_ids",
+                  "recurring_finding_ids",
+                  "outcome"
+                ],
+                "type": "object"
+              },
+              "type": "table"
             }
           GH_AW_LEDGER_COMPACTION_TRIGGER: ${{ inputs.operation == 'compact_ledger' && 'requested' || 'scheduled' }}
           GH_AW_LEDGER_COMPACTION_PLAN_FILE: ${{ runner.temp }}/gh-aw/ledger-compaction/plan-0.json
@@ -1069,10 +1150,51 @@ jobs:
                 "min_segments": 32,
                 "max_segments": 128
               },
+              "key": "run_id",
               "max_patch_kb": 10,
               "max_record_kb": 4,
               "max_segment_kb": 100,
-              "name": "caveman-run-history"
+              "name": "caveman-run-history",
+              "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "date": {
+                    "type": "string"
+                  },
+                  "files_optimized": {
+                    "minimum": 0,
+                    "type": "integer"
+                  },
+                  "files_processed": {
+                    "minimum": 0,
+                    "type": "integer"
+                  },
+                  "planned_outcome": {
+                    "enum": [
+                      "pull_request_requested",
+                      "noop"
+                    ]
+                  },
+                  "record_type": {
+                    "enum": [
+                      "caveman_run"
+                    ]
+                  },
+                  "run_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "record_type",
+                  "run_id",
+                  "date",
+                  "files_processed",
+                  "files_optimized",
+                  "planned_outcome"
+                ],
+                "type": "object"
+              },
+              "type": "table"
             }
           GH_AW_LEDGER_COMPACTION_TRIGGER: ${{ inputs.operation == 'compact_ledger' && 'requested' || 'scheduled' }}
           GH_AW_LEDGER_COMPACTION_PLAN_FILE: ${{ runner.temp }}/gh-aw/ledger-compaction/plan-2.json
@@ -1101,10 +1223,126 @@ jobs:
                 "min_segments": 32,
                 "max_segments": 128
               },
+              "key": "run_id",
               "max_patch_kb": 10,
               "max_record_kb": 8,
               "max_segment_kb": 100,
-              "name": "centralization"
+              "name": "centralization",
+              "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "generated_at": {
+                    "type": "string"
+                  },
+                  "intent_buckets": {
+                    "items": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "avg_sessions": {
+                          "minimum": 0,
+                          "type": "number"
+                        },
+                        "distinct_users": {
+                          "minimum": 0,
+                          "type": "integer"
+                        },
+                        "fallback_rate": {
+                          "minimum": 0,
+                          "type": "number"
+                        },
+                        "intent_bucket": {
+                          "type": "string"
+                        },
+                        "task_count": {
+                          "minimum": 0,
+                          "type": "integer"
+                        }
+                      },
+                      "required": [
+                        "intent_bucket",
+                        "task_count",
+                        "distinct_users",
+                        "avg_sessions",
+                        "fallback_rate"
+                      ],
+                      "type": "object"
+                    },
+                    "maxItems": 10,
+                    "type": "array"
+                  },
+                  "overall_stats": {
+                    "type": "object"
+                  },
+                  "record_type": {
+                    "enum": [
+                      "centralization_snapshot"
+                    ]
+                  },
+                  "repository": {
+                    "type": "string"
+                  },
+                  "run_id": {
+                    "type": "string"
+                  },
+                  "workflow_opportunities": {
+                    "items": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "artifact_types": {
+                          "items": {
+                            "type": "string"
+                          },
+                          "type": "array"
+                        },
+                        "centralization_score": {
+                          "minimum": 0,
+                          "type": "number"
+                        },
+                        "distinct_users": {
+                          "minimum": 0,
+                          "type": "integer"
+                        },
+                        "intent_bucket": {
+                          "type": "string"
+                        },
+                        "recommendation_kind": {
+                          "type": "string"
+                        },
+                        "start_context_guess": {
+                          "type": "string"
+                        },
+                        "task_count": {
+                          "minimum": 0,
+                          "type": "integer"
+                        }
+                      },
+                      "required": [
+                        "intent_bucket",
+                        "artifact_types",
+                        "start_context_guess",
+                        "task_count",
+                        "distinct_users",
+                        "centralization_score",
+                        "recommendation_kind"
+                      ],
+                      "type": "object"
+                    },
+                    "maxItems": 10,
+                    "type": "array"
+                  }
+                },
+                "required": [
+                  "record_type",
+                  "run_id",
+                  "generated_at",
+                  "repository",
+                  "overall_stats",
+                  "intent_buckets",
+                  "workflow_opportunities"
+                ],
+                "type": "object"
+              },
+              "type": "table"
             }
           GH_AW_LEDGER_COMPACTION_TRIGGER: ${{ inputs.operation == 'compact_ledger' && 'requested' || 'scheduled' }}
           GH_AW_LEDGER_COMPACTION_PLAN_FILE: ${{ runner.temp }}/gh-aw/ledger-compaction/plan-3.json
@@ -1165,10 +1403,36 @@ jobs:
                 "min_segments": 32,
                 "max_segments": 128
               },
+              "key": "workflow_run_id",
               "max_patch_kb": 10,
               "max_record_kb": 4,
               "max_segment_kb": 100,
-              "name": "smoke"
+              "name": "smoke",
+              "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "record_type": {
+                    "enum": [
+                      "repo_memory_ledger_smoke"
+                    ]
+                  },
+                  "result": {
+                    "enum": [
+                      "passed"
+                    ]
+                  },
+                  "workflow_run_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "record_type",
+                  "workflow_run_id",
+                  "result"
+                ],
+                "type": "object"
+              },
+              "type": "table"
             }
           GH_AW_LEDGER_COMPACTION_TRIGGER: ${{ inputs.operation == 'compact_ledger' && 'requested' || 'scheduled' }}
           GH_AW_LEDGER_COMPACTION_PLAN_FILE: ${{ runner.temp }}/gh-aw/ledger-compaction/plan-5.json
@@ -1235,10 +1499,91 @@ jobs:
                 "min_segments": 32,
                 "max_segments": 128
               },
+              "key": "run_id",
               "max_patch_kb": 10,
               "max_record_kb": 16,
               "max_segment_kb": 100,
-              "name": "audit-history"
+              "name": "audit-history",
+              "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "aggregate_metrics": {
+                    "type": "object"
+                  },
+                  "anomaly_ids": {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  },
+                  "audit_window": {
+                    "additionalProperties": false,
+                    "properties": {
+                      "end": {
+                        "type": "string"
+                      },
+                      "start": {
+                        "type": "string"
+                      }
+                    },
+                    "type": "object"
+                  },
+                  "audited_at": {
+                    "type": "string"
+                  },
+                  "finding_ids": {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  },
+                  "outcome": {
+                    "enum": [
+                      "findings_reported",
+                      "noop"
+                    ]
+                  },
+                  "recommendation_ids": {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  },
+                  "record_type": {
+                    "enum": [
+                      "workflow_run_audit"
+                    ]
+                  },
+                  "recurring_finding_ids": {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  },
+                  "run_id": {
+                    "type": "string"
+                  },
+                  "runs_reviewed": {
+                    "minimum": 0,
+                    "type": "integer"
+                  }
+                },
+                "required": [
+                  "record_type",
+                  "run_id",
+                  "audited_at",
+                  "audit_window",
+                  "runs_reviewed",
+                  "aggregate_metrics",
+                  "finding_ids",
+                  "recommendation_ids",
+                  "anomaly_ids",
+                  "recurring_finding_ids",
+                  "outcome"
+                ],
+                "type": "object"
+              },
+              "type": "table"
             }
           GH_AW_LEDGER_COMPACTION_TRIGGER: ${{ inputs.operation == 'compact_ledger' && 'requested' || 'scheduled' }}
           GH_AW_LEDGER_COMPACTION_PLAN_FILE: ${{ runner.temp }}/gh-aw/ledger-compaction/plan-0.json
@@ -1299,10 +1644,51 @@ jobs:
                 "min_segments": 32,
                 "max_segments": 128
               },
+              "key": "run_id",
               "max_patch_kb": 10,
               "max_record_kb": 4,
               "max_segment_kb": 100,
-              "name": "caveman-run-history"
+              "name": "caveman-run-history",
+              "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "date": {
+                    "type": "string"
+                  },
+                  "files_optimized": {
+                    "minimum": 0,
+                    "type": "integer"
+                  },
+                  "files_processed": {
+                    "minimum": 0,
+                    "type": "integer"
+                  },
+                  "planned_outcome": {
+                    "enum": [
+                      "pull_request_requested",
+                      "noop"
+                    ]
+                  },
+                  "record_type": {
+                    "enum": [
+                      "caveman_run"
+                    ]
+                  },
+                  "run_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "record_type",
+                  "run_id",
+                  "date",
+                  "files_processed",
+                  "files_optimized",
+                  "planned_outcome"
+                ],
+                "type": "object"
+              },
+              "type": "table"
             }
           GH_AW_LEDGER_COMPACTION_TRIGGER: ${{ inputs.operation == 'compact_ledger' && 'requested' || 'scheduled' }}
           GH_AW_LEDGER_COMPACTION_PLAN_FILE: ${{ runner.temp }}/gh-aw/ledger-compaction/plan-2.json
@@ -1331,10 +1717,126 @@ jobs:
                 "min_segments": 32,
                 "max_segments": 128
               },
+              "key": "run_id",
               "max_patch_kb": 10,
               "max_record_kb": 8,
               "max_segment_kb": 100,
-              "name": "centralization"
+              "name": "centralization",
+              "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "generated_at": {
+                    "type": "string"
+                  },
+                  "intent_buckets": {
+                    "items": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "avg_sessions": {
+                          "minimum": 0,
+                          "type": "number"
+                        },
+                        "distinct_users": {
+                          "minimum": 0,
+                          "type": "integer"
+                        },
+                        "fallback_rate": {
+                          "minimum": 0,
+                          "type": "number"
+                        },
+                        "intent_bucket": {
+                          "type": "string"
+                        },
+                        "task_count": {
+                          "minimum": 0,
+                          "type": "integer"
+                        }
+                      },
+                      "required": [
+                        "intent_bucket",
+                        "task_count",
+                        "distinct_users",
+                        "avg_sessions",
+                        "fallback_rate"
+                      ],
+                      "type": "object"
+                    },
+                    "maxItems": 10,
+                    "type": "array"
+                  },
+                  "overall_stats": {
+                    "type": "object"
+                  },
+                  "record_type": {
+                    "enum": [
+                      "centralization_snapshot"
+                    ]
+                  },
+                  "repository": {
+                    "type": "string"
+                  },
+                  "run_id": {
+                    "type": "string"
+                  },
+                  "workflow_opportunities": {
+                    "items": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "artifact_types": {
+                          "items": {
+                            "type": "string"
+                          },
+                          "type": "array"
+                        },
+                        "centralization_score": {
+                          "minimum": 0,
+                          "type": "number"
+                        },
+                        "distinct_users": {
+                          "minimum": 0,
+                          "type": "integer"
+                        },
+                        "intent_bucket": {
+                          "type": "string"
+                        },
+                        "recommendation_kind": {
+                          "type": "string"
+                        },
+                        "start_context_guess": {
+                          "type": "string"
+                        },
+                        "task_count": {
+                          "minimum": 0,
+                          "type": "integer"
+                        }
+                      },
+                      "required": [
+                        "intent_bucket",
+                        "artifact_types",
+                        "start_context_guess",
+                        "task_count",
+                        "distinct_users",
+                        "centralization_score",
+                        "recommendation_kind"
+                      ],
+                      "type": "object"
+                    },
+                    "maxItems": 10,
+                    "type": "array"
+                  }
+                },
+                "required": [
+                  "record_type",
+                  "run_id",
+                  "generated_at",
+                  "repository",
+                  "overall_stats",
+                  "intent_buckets",
+                  "workflow_opportunities"
+                ],
+                "type": "object"
+              },
+              "type": "table"
             }
           GH_AW_LEDGER_COMPACTION_TRIGGER: ${{ inputs.operation == 'compact_ledger' && 'requested' || 'scheduled' }}
           GH_AW_LEDGER_COMPACTION_PLAN_FILE: ${{ runner.temp }}/gh-aw/ledger-compaction/plan-3.json
@@ -1395,10 +1897,36 @@ jobs:
                 "min_segments": 32,
                 "max_segments": 128
               },
+              "key": "workflow_run_id",
               "max_patch_kb": 10,
               "max_record_kb": 4,
               "max_segment_kb": 100,
-              "name": "smoke"
+              "name": "smoke",
+              "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "record_type": {
+                    "enum": [
+                      "repo_memory_ledger_smoke"
+                    ]
+                  },
+                  "result": {
+                    "enum": [
+                      "passed"
+                    ]
+                  },
+                  "workflow_run_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "record_type",
+                  "workflow_run_id",
+                  "result"
+                ],
+                "type": "object"
+              },
+              "type": "table"
             }
           GH_AW_LEDGER_COMPACTION_TRIGGER: ${{ inputs.operation == 'compact_ledger' && 'requested' || 'scheduled' }}
           GH_AW_LEDGER_COMPACTION_PLAN_FILE: ${{ runner.temp }}/gh-aw/ledger-compaction/plan-5.json

@@ -65,7 +65,7 @@ func collectMaintenanceCompactionLedgers(workflowDataList []*WorkflowData) []Led
 // ledgerCompactionPayload is the trusted per-ledger configuration consumed by
 // actions/setup/js/ledger_compaction.cjs (parseCompactionConfig).
 func ledgerCompactionPayload(ledger LedgerConfig) map[string]any {
-	return map[string]any{
+	payload := map[string]any{
 		"name":           ledger.Name,
 		"branch_name":    ledger.BranchName,
 		"max_record_kb":  ledger.MaxRecordKB,
@@ -73,6 +73,12 @@ func ledgerCompactionPayload(ledger LedgerConfig) map[string]any {
 		"max_patch_kb":   ledger.MaxPatchKB,
 		"compaction":     ledger.Compaction,
 	}
+	if ledger.Type != "" {
+		payload["type"] = ledger.Type
+		payload["key"] = ledger.Key
+		payload["schema"] = ledger.Schema
+	}
+	return payload
 }
 
 func encodeLedgerCompactionConfig(ledger LedgerConfig) (string, error) {
