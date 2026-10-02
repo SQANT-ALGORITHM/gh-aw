@@ -264,20 +264,20 @@ func TestStandaloneLedgerPrompt(t *testing.T) {
 
 func TestStandaloneLedgerReplayConfiguration(t *testing.T) {
 	config, err := parseLedgerToolConfig(map[string]any{
-		"findings":    map[string]any{"replay": map[string]any{"script": "return {tables: {}}"}},
+		"findings":    map[string]any{"type": "log"},
 		"experiments": map[string]any{},
 	})
 	require.NoError(t, err)
-	require.Nil(t, config.Ledgers[0].Replay)
-	require.Equal(t, "return {tables: {}}", config.Ledgers[1].Replay.Script)
-	require.Contains(t, buildLedgerPromptSection(config).Content, "not a sandbox for hostile scripts")
-	require.NotContains(t, buildLedgerPromptSection(config).Content, "replay_metadata")
-	require.Contains(t, NewCompiler().collectPromptSections(&WorkflowData{LedgerConfig: config}), PromptSection{Content: ledgerReplayPromptFile, IsFile: true})
+	require.Equal(t, "log", config.Ledgers[1].Type)
+	require.NotContains(t, buildLedgerPromptSection(config).Content, "Replay scripts")
+	require.NotContains(t, NewCompiler().collectPromptSections(&WorkflowData{LedgerConfig: config}), PromptSection{Content: ledgerReplayPromptFile, IsFile: true})
+	require.Contains(t, buildLedgerPromptSection(config).Content, "state(position: integer, value: text)")
 	encoded, err := encodeLedgerConfigBase64(config)
 	require.NoError(t, err)
 	decoded, err := base64.StdEncoding.DecodeString(encoded)
 	require.NoError(t, err)
-	require.Contains(t, string(decoded), `"replay":{"script":"return {tables: {}}"}`)
+	require.Contains(t, string(decoded), `"type":"log"`)
+	require.NotContains(t, string(decoded), `"replay"`)
 
 	for _, replay := range []any{
 		map[string]any{"script": ""},
@@ -285,10 +285,43 @@ func TestStandaloneLedgerReplayConfiguration(t *testing.T) {
 		map[string]any{"script": "return 1", "sql": "DROP TABLE records"},
 		map[string]any{"script": "return 1", "config": map[string]any{"unsafe": "${{ secrets.KEY }}"}},
 		map[string]any{"script": "return 1", "config": []any{"not an object"}},
-		map[string]any{"script": strings.Repeat("a", maxLedgerReplayScriptBytes+1)},
+		map[string]any{"script": "return {tables: {}}"},
 	} {
-		_, err := parseLedgerToolConfig(map[string]any{"replay": replay})
-		require.Error(t, err)
+		for _, declaration := range []map[string]any{
+			{"replay": replay},
+			{"findings": map[string]any{"replay": replay}},
+			{"type": "log", "replay": replay},
+		} {
+			_, err := parseLedgerToolConfig(declaration)
+			require.ErrorContains(t, err, "replay is no longer supported")
+		}
+	}
+}
+
+func TestBuiltinLedgerActivationPromptDoesNotReadRuntimeProjectionGuidance(t *testing.T) {
+	for _, kind := range []string{"log", "set", "map", "table", "counter", "claims"} {
+		t.Run(kind, func(t *testing.T) {
+			root := t.TempDir()
+			workflowPath := filepath.Join(root, "ledger.md")
+			key := ""
+			if kind == "table" {
+				key = "      key: id\n"
+			}
+			source := "---\non: workflow_dispatch\nengine: copilot\ntools:\n  ledger:\n    history:\n      type: " + kind + "\n" + key + "---\nInspect ledger history.\n"
+			require.NoError(t, os.WriteFile(workflowPath, []byte(source), 0o600))
+			require.NoError(t, NewCompiler().CompileWorkflow(workflowPath))
+			lock, err := os.ReadFile(filepath.Join(root, "ledger.lock.yml"))
+			require.NoError(t, err)
+			require.NotContains(t, string(lock), ledgerReplayPromptFile)
+			require.NotContains(t, string(lock), "ledger_replay")
+			require.Contains(t, string(lock), "read-only projection tables:")
+			require.Contains(t, string(lock), "Create read-only ledger projections")
+			if kind == "claims" {
+				require.Contains(t, string(lock), "claim_state(claim_id: text, upvotes: integer")
+			} else {
+				require.Contains(t, string(lock), "state(")
+			}
+		})
 	}
 }
 
@@ -414,16 +447,16 @@ func TestLedgerConfigEncodingErrors(t *testing.T) {
 }
 
 func TestLedgerConfigEncodingEnforcesEnvironmentLimit(t *testing.T) {
-	script := strings.Repeat("a", maxLedgerReplayScriptBytes)
+	schema := map[string]any{"description": strings.Repeat("a", 64*1024)}
 	config := &LedgerToolConfig{Ledgers: []LedgerConfig{{
-		Name: "findings", Replay: &LedgerReplayConfig{Script: script},
+		Name: "findings", Schema: schema,
 	}}}
 	encoded, err := encodeLedgerConfigBase64(config)
 	require.NoError(t, err)
 	require.LessOrEqual(t, len(encoded), maxLedgerConfigBase64Bytes)
 
 	config.Ledgers = append(config.Ledgers, LedgerConfig{
-		Name: "experiments", Replay: &LedgerReplayConfig{Script: script},
+		Name: "experiments", Schema: schema,
 	})
 	_, err = encodeLedgerConfigBase64(config)
 	require.ErrorContains(t, err, "exceeds the 98304-byte environment limit")
