@@ -2826,9 +2826,9 @@ engine:
     # (optional)
     location: "example-value"
 
-  # Additional engine configuration text. Codex accepts TOML appended to
-  # config.toml. Pi accepts a JSON object with settings, model metadata overrides,
-  # MCP exposure settings, and session persistence options.
+  # Additional engine configuration text. Codex accepts TOML structurally merged
+  # into config.toml. Pi accepts a JSON object with settings, model metadata
+  # overrides, MCP exposure settings, and session persistence options.
   # (optional)
   config: "example-value"
 
@@ -2850,10 +2850,11 @@ engine:
   args: []
     # Array of strings
 
-  # When true, disables automatic loading of context and custom instructions by the
-  # AI engine. Copilot uses --no-custom-instructions, Claude uses --bare, and Pi
+  # When true, disables automatic loading of context and custom instructions where
+  # supported. Copilot uses --no-custom-instructions, Claude uses --bare, and Pi
   # disables context-file, skill, prompt-template, extension, and theme discovery
-  # while retaining explicit workflow infrastructure extensions. Defaults to false.
+  # while retaining explicit workflow infrastructure extensions. Codex and Gemini do
+  # not support this option and emit a warning. Defaults to false.
   # (optional)
   bare: true
 
@@ -3005,10 +3006,11 @@ engine:
       body-inject:
         {}
 
-  # When true, disables automatic loading of context and custom instructions by the
-  # AI engine. The engine-specific flag depends on the engine: copilot uses
-  # --no-custom-instructions, claude uses --bare, codex uses --no-system-prompt,
-  # gemini sets GEMINI_SYSTEM_MD=/dev/null. Defaults to false.
+  # When true, disables automatic loading of context and custom instructions where
+  # supported. Copilot uses --no-custom-instructions, Claude uses --bare, and Pi
+  # disables context-file, skill, prompt-template, extension, and theme discovery
+  # while retaining explicit workflow infrastructure extensions. Codex and Gemini do
+  # not support this option and emit a warning. Defaults to false.
   # (optional)
   bare: true
 
@@ -21265,9 +21267,9 @@ safe-outputs:
         # (optional)
         location: "example-value"
 
-      # Additional engine configuration text. Codex accepts TOML appended to
-      # config.toml. Pi accepts a JSON object with settings, model metadata overrides,
-      # MCP exposure settings, and session persistence options.
+      # Additional engine configuration text. Codex accepts TOML structurally merged
+      # into config.toml. Pi accepts a JSON object with settings, model metadata
+      # overrides, MCP exposure settings, and session persistence options.
       # (optional)
       config: "example-value"
 
@@ -21289,10 +21291,11 @@ safe-outputs:
       args: []
         # Array of strings
 
-      # When true, disables automatic loading of context and custom instructions by the
-      # AI engine. Copilot uses --no-custom-instructions, Claude uses --bare, and Pi
+      # When true, disables automatic loading of context and custom instructions where
+      # supported. Copilot uses --no-custom-instructions, Claude uses --bare, and Pi
       # disables context-file, skill, prompt-template, extension, and theme discovery
-      # while retaining explicit workflow infrastructure extensions. Defaults to false.
+      # while retaining explicit workflow infrastructure extensions. Codex and Gemini do
+      # not support this option and emit a warning. Defaults to false.
       # (optional)
       bare: true
 
@@ -21444,10 +21447,11 @@ safe-outputs:
           body-inject:
             {}
 
-      # When true, disables automatic loading of context and custom instructions by the
-      # AI engine. The engine-specific flag depends on the engine: copilot uses
-      # --no-custom-instructions, claude uses --bare, codex uses --no-system-prompt,
-      # gemini sets GEMINI_SYSTEM_MD=/dev/null. Defaults to false.
+      # When true, disables automatic loading of context and custom instructions where
+      # supported. Copilot uses --no-custom-instructions, Claude uses --bare, and Pi
+      # disables context-file, skill, prompt-template, extension, and theme discovery
+      # while retaining explicit workflow infrastructure extensions. Codex and Gemini do
+      # not support this option and emit a warning. Defaults to false.
       # (optional)
       bare: true
 
