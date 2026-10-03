@@ -41,8 +41,12 @@ function mergeSessionSources(sources) {
   const events = sources.flatMap(source =>
     source.events.map((event, index) => {
       const timestampMs = sessionTimestamp(event, source.timestampUnit);
+      const normalized = normalizeUnifiedSessionEvent(event);
+      if (event.type === "detection.result" && source.path !== "usage/detection/detection_result.json") {
+        delete normalized.data.reason;
+      }
       return {
-        ...normalizeUnifiedSessionEvent(event),
+        ...normalized,
         provenance: {
           component: source.component,
           phase: source.phase,
@@ -287,7 +291,8 @@ function collectUnifiedSession({ rootDir = "/tmp/gh-aw", engine, warn = message 
     [["agent_execution.json", "usage/agent/execution.json"], "execution", "agent", "execution.result"],
     [["threat-detection/execution.json", "usage/detection/execution.json"], "execution", "detection", "execution.result"],
     [["evals/evals/execution.json", "evals/execution.json", "usage/evals/execution.json"], "execution", "evals", "execution.result"],
-    [["threat-detection/detection_result.json", "usage/detection/detection_result.json"], "detection", "detection", "detection.result"],
+    // The sanitized conclusion result includes job outcomes as well as structured or inline verdicts.
+    [["usage/detection/detection_result.json", "threat-detection/detection_result.json"], "detection", "detection", "detection.result"],
   ];
   for (const [candidates, component, phase, type] of observations) {
     const file = choose(candidates);
