@@ -73,6 +73,8 @@ safe-outputs:
           uses: actions/checkout@v7.0.1
           with:
             persist-credentials: false
+        - name: Set up safe-output helpers
+          uses: ./actions/setup
         - name: Revalidate live provenance and publish essential assignments
           uses: actions/github-script@v9.0.0
           env:
@@ -80,8 +82,10 @@ safe-outputs:
           with:
             github-token: ${{ secrets.GITHUB_TOKEN }}
             script: |
+              const { setupGlobals, createIssue } = require(`${process.env.RUNNER_TEMP}/gh-aw/actions/index.cjs`);
+              setupGlobals(core, github, context, exec, io, getOctokit);
               const { publish } = require(`${process.env.GITHUB_WORKSPACE}/.github/scripts/aw_issue_clustering_publish.cjs`);
-              await publish({ github, context, core });
+              await publish({ github, context, core, createIssue });
 ---
 
 # AW essential ten
