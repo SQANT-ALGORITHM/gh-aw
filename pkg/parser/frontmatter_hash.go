@@ -697,11 +697,19 @@ func runtimeImportHashRealPathAllowed(candidate, baseDir string) bool {
 }
 
 func realPathWithinBaseForHash(pathToCheck, baseDir string) bool {
-	realBase, err := filepath.EvalSymlinks(baseDir)
+	absoluteBase, err := filepath.Abs(baseDir)
 	if err != nil {
 		return false
 	}
-	realPath, err := filepath.EvalSymlinks(pathToCheck)
+	absolutePath, err := filepath.Abs(pathToCheck)
+	if err != nil {
+		return false
+	}
+	realBase, err := filepath.EvalSymlinks(absoluteBase)
+	if err != nil {
+		return false
+	}
+	realPath, err := filepath.EvalSymlinks(absolutePath)
 	if err != nil {
 		return false
 	}
@@ -766,7 +774,10 @@ func runtimeImportHashCandidatePaths(importPath, baseDir string) []string {
 }
 
 func runtimeImportHashWorkspaceRoot(baseDir string) string {
-	normalized := filepath.ToSlash(baseDir)
+	normalized := filepath.ToSlash(filepath.Clean(baseDir))
+	if normalized == ".github" || strings.HasPrefix(normalized, constants.GithubDir) {
+		return "."
+	}
 	if before, _, ok := strings.Cut(normalized, "/.github/"); ok {
 		return filepath.FromSlash(before)
 	}

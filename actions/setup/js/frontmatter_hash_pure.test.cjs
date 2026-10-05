@@ -1,5 +1,5 @@
 // @ts-check
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 const path = require("path");
 const fs = require("fs");
 const {
@@ -171,6 +171,61 @@ engine: copilot`;
       ]);
 
       expect(extractAllTemplateExpressions("A $" + "{{ needs.a.outputs.x }} B $" + "{{ vars.CFG }}")).toEqual(["$" + "{{ needs.a.outputs.x }}", "$" + "{{ vars.CFG }}"]);
+    });
+
+    it("should hash runtime imports identically for relative and absolute workflow paths", async () => {
+      const content = "---\nengine: copilot\n---\n{{#runtime-import .github/prompts/relative-context.md}}";
+      const prompt = "Use ${{ github.repository }}.";
+      const files = new Map([
+        [".github/workflows/relative-workflow.md", content],
+        [".github/prompts/relative-context.md", prompt],
+        ["/repo/.github/workflows/relative-workflow.md", content],
+        ["/repo/.github/prompts/relative-context.md", prompt],
+      ]);
+      const fileReader = async filePath => {
+        if (!files.has(filePath)) throw new Error(`File not found: ${filePath}`);
+        return files.get(filePath);
+      };
+      const relativeHash = await computeFrontmatterHash(".github/workflows/relative-workflow.md", { fileReader });
+      const absoluteHash = await computeFrontmatterHash("/repo/.github/workflows/relative-workflow.md", { fileReader });
+      expect(relativeHash).toBe(absoluteHash);
+    });
+
+    it("should not use local symlink containment when hashing GitHub API content", async () => {
+      const workflowPath = ".github/workflows/remote-context-workflow.md";
+      const promptPath = ".github/prompts/remote-context.md";
+      const files = new Map([
+        [workflowPath, `---\nengine: copilot\n---\n{{#runtime-import ${promptPath}}}`],
+        [promptPath, "Use ${{ github.repository }}."],
+      ]);
+      const github = {
+        rest: {
+          repos: {
+            getContent: vi.fn(async ({ path: filePath }) => {
+              if (!files.has(filePath)) throw new Error(`Missing ${filePath}`);
+              return { data: { content: files.get(filePath) } };
+            }),
+          },
+        },
+      };
+      const apiFileReader = createGitHubFileReader(github, "source-owner", "source-repo", "source-ref");
+      const fileReader = async filePath => apiFileReader(filePath);
+      const readerOptions = { fileReader, readerMode: "github-api" };
+      const originalHash = await computeFrontmatterHash(workflowPath, readerOptions);
+      const exists = vi.spyOn(fs, "existsSync").mockReturnValue(true);
+      const realpath = vi.spyOn(fs, "realpathSync").mockImplementation(() => {
+        throw new Error("Unrelated local checkout");
+      });
+      try {
+        expect(await computeFrontmatterHash(workflowPath, readerOptions)).toBe(originalHash);
+        expect(realpath).not.toHaveBeenCalled();
+        const localModeHash = await computeFrontmatterHash(workflowPath, { fileReader });
+        expect(localModeHash).not.toBe(originalHash);
+        expect(realpath).toHaveBeenCalled();
+      } finally {
+        exists.mockRestore();
+        realpath.mockRestore();
+      }
     });
 
     it("should include the runtime-import expression set in the frontmatter hash", async () => {
@@ -1312,7 +1367,7 @@ describe("symlink traversal regression for activation hash symlink handling", ()
       const apiReader = createGitHubFileReader(github, "owner", "repo", "main");
 
       const fsHash = await computeFrontmatterHash(mainPath, { fileReader: fsReader });
-      const apiHash = await computeFrontmatterHash(mainPath, { fileReader: apiReader });
+      const apiHash = await computeFrontmatterHash(mainPath, { fileReader: apiReader, readerMode: "github-api" });
 
       // Both hashes must agree — this is the invariant the activation job relies on
       expect(apiHash).toBe(fsHash);
